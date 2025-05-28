@@ -9,6 +9,8 @@ export const pages = pgTable("pages", {
   imageUrl: text("image_url").notNull(),
   targetLink: text("target_link"),
   slug: text("slug").notNull().unique(),
+  type: text("type").notNull().default("STANDARD"),
+  graphData: text("graph_data"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -23,6 +25,18 @@ export const insertPageSchema = createInsertSchema(pages).omit({
     message: "Please enter a valid target URL"
   }),
   slug: z.string().min(1, "Slug is required").max(100, "Slug must be less than 100 characters").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
+  type: z.enum(["STANDARD", "GRAPH"]).default("STANDARD"),
+  graphData: z.string().optional().refine((val) => {
+    if (!val || val.trim() === "") return true;
+    try {
+      JSON.parse(val);
+      return true;
+    } catch {
+      return false;
+    }
+  }, {
+    message: "Graph data must be valid JSON"
+  }),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;
